@@ -13,10 +13,15 @@
 
 /*! @cond IGNORE */
 @interface ARSQLiteConnection ()
+  NSDateFormatter *dateFormatter = nil;
 - (sqlite3_stmt *)prepareQuerySQL:(NSString *)query;
 - (void)finalizeQuery:(sqlite3_stmt *)query;
 - (NSArray *)columnsForQuery:(sqlite3_stmt *)query;
 - (id)valueForColumn:(unsigned int)colIndex query:(sqlite3_stmt *)query;
+- (NSDate *)dateFromString:(NSString *)dateString;
+- (NSDate *)dateTimeFromString:(NSString *)dateString;
+- (NSString *)stringFromDate:(NSDate *)date;
+- (NSString *)stringFromDateTime:(NSDate *)date;
 @end
 /*! @endcond */
 
@@ -87,7 +92,15 @@
 			sqlite3_bind_double(queryByteCode, i, [sub doubleValue]);
 		else if([sub isMemberOfClass:[NSNull class]])
 			sqlite3_bind_null(queryByteCode, i);
-		else
+		else if([sub isMemberOfClass:[NSDate class]] || [[sub className] isEqualToString:@"NSCFDate"] || [[sub className] isEqualToString:@"__NSCFDate"]) 
+    {
+      // FIXME: this is the wrong place to be doing expensive meta lookups. 
+      //        decltype is only for SELECT... For now just save it 
+      //        with the time till we have the data dictionary info here
+      NSString *str = nil;
+      str = [self stringFromDateTime:sub];
+      sqlite3_bind_text(queryByteCode, i, [str UTF8String], [str length], SQLITE_TRANSIENT);
+		} else
 			[NSException raise:@"Unrecognized object type" format:@"Active record doesn't know how to handle this type of object: %@ class: %@", sub, [sub className]];
 	}
   
@@ -191,6 +204,7 @@
 - (id)valueForColumn:(unsigned int)colIndex query:(sqlite3_stmt *)query
 {
   int columnType = sqlite3_column_type(query, colIndex);
+  const char *decltype = nil;
   switch(columnType)
   {
     case SQLITE_INTEGER:
@@ -207,7 +221,13 @@
       return [NSNull null];
       break;
     case SQLITE_TEXT:
-      return [NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)];
+      decltype = sqlite3_column_decltype(query, colIndex);
+      if ( !strcmp(decltype, "date") ) 
+        return [self dateFromString:[NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)]];
+      else if ( !strcmp(decltype, "datetime") )
+        return [self dateTimeFromString:[NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)]];
+      else 
+        return [NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)];
       break;
     default:
       // It really shouldn't ever come to this.
@@ -243,6 +263,38 @@
   return YES;
 }
 
+- (NSDate *)dateFromString:(NSString *)dateString
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd"];
+  return ([dateFormatter dateFromString:dateString]);
+}
+
+- (NSString *)stringFromDate:(NSDate *)date
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd"];
+  return ([dateFormatter stringFromDate:date]);
+}
+
+- (NSDate *)dateTimeFromString:(NSString *)dateString
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss.SSSS"];
+  return ([dateFormatter dateFromString:dateString]);
+}
+
+- (NSString *)stringFromDateTime:(NSDate *)date
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss.SSSS"];
+  return ([dateFormatter stringFromDate:date]);
+}
+
 #pragma mark -
 #pragma mark Cleanup
 - (void)finalize
@@ -253,6 +305,7 @@
 - (void)dealloc
 {
   [self closeConnection];
+  [dateFormatter release];
   [super dealloc];
 }
 @end
