@@ -65,7 +65,7 @@
 }
 
 #pragma mark -
-#pragma mark SQL Eecuting
+#pragma mark SQL Executing
 - (NSArray *)executeSQL:(NSString *)sql substitutions:(NSDictionary *)substitutions
 {
 	//ARDebugLog(@"Executing SQL: %@ subs: %@", sql, substitutions);
@@ -94,9 +94,11 @@
 			sqlite3_bind_null(queryByteCode, i);
 		else if([sub isMemberOfClass:[NSDate class]] || [[sub className] isEqualToString:@"NSCFDate"] || [[sub className] isEqualToString:@"__NSCFDate"]) 
     {
-      // FIXME: this is the wrong place to be doing expensive meta lookups. 
-      //        decltype is only for SELECT... For now just save it 
-      //        with the time till we have the data dictionary info here
+      // FIXME: DATE and DATETIME are stored as DATETIME (wasted disk space)
+      //        I think to fix columnCache should be moved from ARBase to
+      //        here (connection) as columnsForTable is expensive.  Howerver,
+      //        ARBase should have a way to clear out the cache entries it 
+      //        addes to the connection when the model is destoryed.
       NSString *str = nil;
       str = [self stringFromDateTime:sub];
       sqlite3_bind_text(queryByteCode, i, [str UTF8String], [str length], SQLITE_TRANSIENT);
