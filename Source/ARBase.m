@@ -241,8 +241,14 @@ static NSString *classPrefix = nil;
 #pragma mark Accessors
 - (id)retrieveValueForKey:(NSString *)key
 {
+	id cached;
+        // First check the delayed writing cache
+	cached = [writeCache objectForKey:key];
+	if(cached && [ARBase delayWriting])
+		return cached;
+
 	// Check if we have a cached value and if caching is enabled
-	id cached = [readCache objectForKey:key];
+	cached = [readCache objectForKey:key];
 	if(cached && [ARBase enableCache])
 		return cached;
 	
