@@ -50,7 +50,7 @@
 													join:joinSQL
 												 order:orderSQL
 												 limit:limit
-										connection:[self defaultConnection]];
+										connection:aConnection];
   
   NSMutableArray *models = [NSMutableArray array];
   for(NSDictionary *match in ids)
