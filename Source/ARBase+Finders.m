@@ -15,16 +15,32 @@
   return [self find:idOrSpecification
          connection:[self defaultConnection]];
 }
-+ (NSArray *)find:(ARFindSpecification)idOrSpecification connection:(id<ARConnection>)connection
++ (NSArray *)find:(ARFindSpecification)idOrSpecification select:(NSString *)selectSQL
 {
   return [self find:idOrSpecification
+             select:selectSQL
+         connection:[self defaultConnection]];
+}
++ (NSArray *)find:(ARFindSpecification)idOrSpecification connection:(id<ARConnection>)aConnection
+{
+  return [self find:idOrSpecification
+             select:@"id"
              filter:nil 
 							 join:nil
               order:nil
               limit:0
-         connection:connection];
+         connection:aConnection];
 }
-
++ (NSArray *)find:(ARFindSpecification)idOrSpecification select:(NSString *)selectSQL connection:(id<ARConnection>)aConnection
+{
+  return [self find:idOrSpecification
+             select:selectSQL
+             filter:nil 
+							 join:nil
+              order:nil
+              limit:0
+         connection:aConnection];
+}
 + (NSArray *)find:(ARFindSpecification)idOrSpecification 
            filter:(NSString *)whereSQL 
 						 join:(NSString *)joinSQL
@@ -32,6 +48,22 @@
             limit:(NSUInteger)limit
 {
   return [self find:idOrSpecification
+             select:@"id"
+             filter:whereSQL 
+							 join:joinSQL
+              order:orderSQL
+              limit:limit
+         connection:[self defaultConnection]];
+}
++ (NSArray *)find:(ARFindSpecification)idOrSpecification 
+           select:(NSString *)selectSQL 
+           filter:(NSString *)whereSQL 
+						 join:(NSString *)joinSQL
+            order:(NSString *)orderSQL
+            limit:(NSUInteger)limit
+{
+  return [self find:idOrSpecification
+             select:selectSQL 
              filter:whereSQL 
 							 join:joinSQL
               order:orderSQL
@@ -45,7 +77,24 @@
             limit:(NSUInteger)limit
        connection:(id<ARConnection>)aConnection
 {
+  return [self find:idOrSpecification
+             select:@"id"
+             filter:whereSQL 
+							 join:joinSQL
+              order:orderSQL
+              limit:limit
+         connection:aConnection];
+}
++ (NSArray *)find:(ARFindSpecification)idOrSpecification
+           select:(NSString *)selectSQL 
+           filter:(NSString *)whereSQL 
+						 join:(NSString *)joinSQL
+            order:(NSString *)orderSQL 
+            limit:(NSUInteger)limit
+       connection:(id<ARConnection>)aConnection
+{
 	NSArray *ids = [self findIds:idOrSpecification
+												select:selectSQL 
 												filter:whereSQL 
 													join:joinSQL
 												 order:orderSQL
@@ -56,7 +105,10 @@
   for(NSDictionary *match in ids)
   {
     NSUInteger id = [[match objectForKey:@"id"] unsignedIntValue];
-    [models addObject:[[[self alloc] initWithConnection:aConnection id:id] autorelease]];
+    if ( [selectSQL isEqualToString:@"id"] == YES )
+      [models addObject:[[[self alloc] initWithConnection:aConnection id:id] autorelease]];
+    else
+      [models addObject:[[[self alloc] initWithConnection:aConnection id:id readCache:match] autorelease]];
   }
   return models;
 }
@@ -68,7 +120,27 @@
 							 limit:(NSUInteger)limit
 					connection:(id<ARConnection>)aConnection
 {
-  NSMutableString *query = [NSMutableString stringWithFormat:@"SELECT id FROM %@", [self tableName]];
+	return [self findIds:idOrSpecification
+												select:@"id" 
+												filter:whereSQL 
+													join:joinSQL
+												 order:orderSQL
+												 limit:limit
+										connection:aConnection];
+}
++ (NSArray *)findIds:(ARFindSpecification)idOrSpecification
+							select:(NSString *)selectSQL 
+							filter:(NSString *)whereSQL 
+								join:(NSString *)joinSQL
+							 order:(NSString *)orderSQL 
+							 limit:(NSUInteger)limit
+					connection:(id<ARConnection>)aConnection
+{
+  NSMutableString *query;
+  if ( [selectSQL isEqualToString:@"id"] )
+    query = [NSMutableString stringWithFormat:@"SELECT id FROM %@", [self tableName]];
+  else
+    query = [NSMutableString stringWithFormat:@"SELECT id, %@ FROM %@", selectSQL, [self tableName]];
 	if(joinSQL)
 		[query appendFormat:@" %@", joinSQL];
 	

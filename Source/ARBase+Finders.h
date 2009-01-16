@@ -43,7 +43,11 @@
 + (NSArray *)find:(ARFindSpecification)idOrSpecification;
 /*! Finds a record based on the find specification, filter and limit using the specified connection. 
  * @param idOrSpecification The find specification
- * @param limit The maximum number of records to retrieve
+ */
++ (NSArray *)find:(ARFindSpecification)idOrSpecification select:(NSString *)selectSQL;
+/*! Finds a record based on the find specification, select, filter and limit using the specified connection. 
+ * @param idOrSpecification The find specification
+ * @param selectSQL A valid SQL SELECT statement (omitting the actual "SELECT")
  */
 + (NSArray *)find:(ARFindSpecification)idOrSpecification connection:(id<ARConnection>)connection;
 /*! Finds a record based on the find specification, filter and limit. 
@@ -52,7 +56,28 @@
  * @param orderSQL A valud SQL ORDER statement (omitting the actual "ORDER BY")
  * @param limit The maximum number of records to retrieve
  */
++ (NSArray *)find:(ARFindSpecification)idOrSpecification select:(NSString *)selectSQL connection:(id<ARConnection>)connection;
+/*! Finds a record based on the find specification, filter and limit. 
+ * @param idOrSpecification The find specification
+ * @param selectSQL A valid SQL SELECT statement (omitting the actual "SELECT")
+ * @param whereSQL A valid SQL WHERE statement (omitting the actual "WHERE")
+ * @param orderSQL A valud SQL ORDER statement (omitting the actual "ORDER BY")
+ * @param limit The maximum number of records to retrieve
+ */
 + (NSArray *)find:(ARFindSpecification)idOrSpecification 
+           filter:(NSString *)whereSQL
+						 join:(NSString *)joinSQL
+          order:(NSString *)orderSQL
+            limit:(NSUInteger)limit;
+/*! Finds a record based on the find specification, filter and limit using the specified connection. 
+ * @param idOrSpecification The find specification
+ * @param whereSQL A valid SQL WHERE statement (omitting the actual "WHERE")
+ * @param orderSQL A valud SQL ORDER statement (omitting the actual "ORDER BY")
+ * @param limit The maximum number of records to retrieve
+ * @param connection The connection to use for the record. (Pass nil to use the default connection)
+ */
++ (NSArray *)find:(ARFindSpecification)idOrSpecification 
+           select:(NSString *)selectSQL
            filter:(NSString *)whereSQL
 						 join:(NSString *)joinSQL
           order:(NSString *)orderSQL
@@ -70,6 +95,21 @@
             order:(NSString *)orderSQL
             limit:(NSUInteger)limit
        connection:(id<ARConnection>)aConnection;
+/*! Finds a record based on the find specification, filter and limit using the specified connection. 
+ * @param idOrSpecification The find specification
+ * @param selectSQL A valid SQL SELECT statement (omitting the actual "SELECT")
+ * @param whereSQL A valid SQL WHERE statement (omitting the actual "WHERE")
+ * @param orderSQL A valud SQL ORDER statement (omitting the actual "ORDER BY")
+ * @param limit The maximum number of records to retrieve
+ * @param connection The connection to use for the record. (Pass nil to use the default connection)
+ */
++ (NSArray *)find:(ARFindSpecification)idOrSpecification
+           select:(NSString *)selectSQL
+           filter:(NSString *)whereSQL
+						 join:(NSString *)joinSQL
+            order:(NSString *)orderSQL
+            limit:(NSUInteger)limit
+       connection:(id<ARConnection>)aConnection;
 /*! Finds ids of records matching the find specification, filter and limit using the specified connection.\n
  * You generally won't need to use this method, but it can be useful in cases where you just want to know for example\n
  * The number of records matching.
@@ -80,6 +120,23 @@
  * @param connection The connection to use for the record. (Pass nil to use the default connection)
  */
 + (NSArray *)findIds:(ARFindSpecification)idOrSpecification
+							filter:(NSString *)whereSQL 
+								join:(NSString *)joinSQL
+							 order:(NSString *)orderSQL 
+							 limit:(NSUInteger)limit
+					connection:(id<ARConnection>)aConnection;
+/*! Finds ids of records matching the find specification, filter and limit using the specified connection.\n
+ * You generally won't need to use this method, but it can be useful in cases where you just want to know for example\n
+ * The number of records matching.
+ * @param idOrSpecification The find specification
+ * @param selectSQL A valid SQL SELECT statement (omitting the actual "SELECT")
+ * @param whereSQL A valid SQL WHERE statement (omitting the actual "WHERE")
+ * @param orderSQL A valud SQL ORDER statement (omitting the actual "ORDER BY")
+ * @param limit The maximum number of records to retrieve
+ * @param connection The connection to use for the record. (Pass nil to use the default connection)
+ */
++ (NSArray *)findIds:(ARFindSpecification)idOrSpecification
+              select:(NSString *)selectSQL
 							filter:(NSString *)whereSQL 
 								join:(NSString *)joinSQL
 							 order:(NSString *)orderSQL 
