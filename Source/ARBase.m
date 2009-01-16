@@ -77,6 +77,14 @@ static NSString *classPrefix = nil;
 			[readCache removeObjectForKey:key];
 	}
 }
+- (void)removeFromCache:(NSString *)key 
+{
+    [readCache removeObjectForKey:key];
+}
+- (void)clearWriteCache
+{
+    [writeCache removeAllObjects];
+}
 
 #pragma mark -
 #pragma mark Delayed writing
@@ -208,6 +216,13 @@ static NSString *classPrefix = nil;
 {
   return [self initWithConnection:[ARBase defaultConnection] id:id];
 }
+- (id)initWithConnection:(id<ARConnection>)aConnection id:(NSUInteger)id readCache:(NSDictionary *)initialReadCache;
+{
+  [self initWithConnection:aConnection id:id];
+  [readCache release]; 
+  readCache = [initialReadCache mutableCopy];
+  return self;
+}
 - (id)initWithConnection:(id<ARConnection>)aConnection id:(NSUInteger)id
 {
   if(![self init])
@@ -242,7 +257,7 @@ static NSString *classPrefix = nil;
 - (id)retrieveValueForKey:(NSString *)key
 {
 	id cached;
-        // First check the delayed writing cache
+  // First check the delayed writing cache
 	cached = [writeCache objectForKey:key];
 	if(cached && [ARBase delayWriting])
 		return cached;

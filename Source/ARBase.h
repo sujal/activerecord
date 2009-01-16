@@ -107,6 +107,7 @@ typedef enum {
  * @param id The id of the record to retrieve
  */
 - (id)initWithConnection:(id<ARConnection>)aConnection id:(NSUInteger)id;
+- (id)initWithConnection:(id<ARConnection>)aConnection id:(NSUInteger)id readCache:(NSDictionary *)initialReadCache;
 
 
 /*!  Sets the default connection to be used by ARBase and it's subclasses */
@@ -128,6 +129,10 @@ typedef enum {
 + (void)setEnableCache:(BOOL)flag;
 /*! Refetches all cached values */
 - (void)refreshCache;
+/*! Removes a single value from the cache */
+- (void)removeFromCache:(NSString *)key;
+/*! Clears the write cache to cancel any changes */
+- (void)clearWriteCache;
 
 /*! Returns wether ARBase and it's subclasses will hold off writing changes to the database until told to save */
 + (BOOL)delayWriting;
