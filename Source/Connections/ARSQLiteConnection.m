@@ -13,7 +13,6 @@
 
 /*! @cond IGNORE */
 @interface ARSQLiteConnection ()
-  NSDateFormatter *dateFormatter = nil;
 - (sqlite3_stmt *)prepareQuerySQL:(NSString *)query;
 - (void)finalizeQuery:(sqlite3_stmt *)query;
 - (NSArray *)columnsForQuery:(sqlite3_stmt *)query;
@@ -149,9 +148,22 @@
 
 - (NSArray *)columnsForTable:(NSString *)tableName
 {
+
+  NSArray *columns = nil;
+
+  if (!columnCache)
+		columnCache = [[NSMutableDictionary dictionary] retain];
+  else
+    columns = [columnCache objectForKey:tableName];
+  
+  if ( columns )
+    return columns;
+
   sqlite3_stmt *queryByteCode = [self prepareQuerySQL:[NSString stringWithFormat:@"SELECT * FROM %@", tableName]];
-  NSArray *columns = [self columnsForQuery:queryByteCode];
+  columns = [self columnsForQuery:queryByteCode];
   [self finalizeQuery:queryByteCode];
+
+  [columnCache setObject:columns forKey:tableName];
   return columns;
 }
 

@@ -80,7 +80,6 @@ typedef enum {
 	NSMutableDictionary *writeCache;
 	NSMutableArray *addCache;
 	NSMutableArray *removeCache;
-	NSArray *columnCache;
 }
 @property(readwrite, retain) id<ARConnection> connection;
 @property(readwrite, retain) NSMutableArray *relationships;

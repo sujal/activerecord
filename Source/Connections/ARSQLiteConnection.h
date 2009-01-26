@@ -44,6 +44,8 @@ typedef enum  {
 
 @interface ARSQLiteConnection : NSObject <ARConnection> {
   sqlite3 *database;
+  NSDateFormatter *dateFormatter;
+  NSMutableDictionary *columnCache;
 }
 /*!
  * Returns a ready to use sqlite "connection"\n

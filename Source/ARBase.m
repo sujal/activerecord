@@ -343,9 +343,7 @@ static NSString *classPrefix = nil;
 #pragma mark Database interface
 - (NSArray *)columns
 {
-	if(!columnCache)
-		columnCache = [[self.connection columnsForTable:[[self class] tableName]] retain];
-	return columnCache;
+  return [[self.connection columnsForTable:[[self class] tableName]] retain];
 }
 + (NSString *)idColumnForModel:(Class)modelClass
 {
@@ -422,8 +420,6 @@ static NSString *classPrefix = nil;
 	[readCache release];
 	[addCache release];
 	[removeCache release];
-	if(columnCache)
-		[columnCache release];
   
   [super dealloc];
 }

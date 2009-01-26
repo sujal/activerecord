@@ -11,6 +11,7 @@
 
 /*! @cond IGNORE */
 @interface ARMySQLConnection ()
+	NSMutableDictionary *columnCache;
 - (NSString *)lastErrorMessage;
 - (BOOL)ping;
 - (BOOL)connectWithHost:(NSString *)host 
@@ -143,6 +144,16 @@
 }
 - (NSArray *)columnsForTable:(NSString *)tableName
 {
+  NSMutableArray *fieldNames = nil;
+
+  if (!columnCache)
+		columnCache = [NSMutableDictionary dictionary];
+  else
+    fieldNames = [columnCache objectForKey:tableName];
+  
+  if ( fieldNames )
+    return fieldNames;
+
 	MYSQL_RES *result = mysql_list_fields(mySQLConnection, [tableName UTF8String], "%");
 	if(result)
 	{
@@ -152,6 +163,7 @@
 		{
 			[fieldNames addObject:field.name];
 		}
+    [columnCache setObject:fieldNames forKey:tableName];
 		return fieldNames;
 	}
 	else
@@ -258,6 +270,8 @@
 - (void)dealloc
 {
   [self closeConnection];
+	if(columnCache)
+		[columnCache release];
   [super dealloc];
 }
 @end
