@@ -139,10 +139,9 @@
 #pragma mark -
 - (NSString *)className
 {
-    if(!className)
-        return [NSString stringWithFormat:@"%@%@", [ARBase classPrefix], [[self.name singularizedString] stringByCapitalizingFirstLetter]];
-    else
-        return className;
+  if(!className)
+    self.className = [NSString stringWithFormat:@"%@%@", [ARBase classPrefix], [[[self.name singularizedString] camelizedString] stringByCapitalizingFirstLetter]];
+	return className;
 }
 @end
 
