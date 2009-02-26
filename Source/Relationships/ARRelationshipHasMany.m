@@ -15,15 +15,17 @@
 @implementation ARRelationshipHasMany
 #pragma mark Key parser
 #pragma mark -
+
 - (BOOL)respondsToKey:(NSString *)key supportsAdding:(BOOL *)supportsAddingRet
 {
-  if([key isEqualToString:self.name])
+	NSString *relationshipName = [key underscoredString];
+  if([relationshipName isEqualToString:self.name])
   {
     if(supportsAddingRet != NULL)
       *supportsAddingRet = NO;
     return YES;
   }
-  else if([key isEqualToString:[self.name singularizedString]])
+  else if([relationshipName isEqualToString:[self.name singularizedString]])
   {
     if(supportsAddingRet != NULL)
       *supportsAddingRet = YES;

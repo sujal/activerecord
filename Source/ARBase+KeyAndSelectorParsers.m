@@ -56,9 +56,10 @@
 }
 - (ARRelationship *)relationshipForKey:(NSString *)key
 {
+	NSString *relationshipName = [key underscoredString];
   for(ARRelationship *relationship in self.relationships)
   {
-    if([relationship respondsToKey:key])
+    if([relationship respondsToKey:relationshipName])
       return relationship;
   }
   return nil;
