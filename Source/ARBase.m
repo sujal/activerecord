@@ -347,7 +347,10 @@ static NSString *classPrefix = nil;
 }
 + (NSString *)idColumnForModel:(Class)modelClass
 {
-  return [NSString stringWithFormat:@"%@Id", [[modelClass tableName] singularizedString]];
+	if([[self class] namingStyle] == ARRailsNamingStyle)
+		return [NSString stringWithFormat:@"%@_id", [[modelClass tableName] singularizedString]];
+	else
+		return [NSString stringWithFormat:@"%@Id", [[modelClass tableName] singularizedString]];
 }
 + (NSString *)idColumn
 {
