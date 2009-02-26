@@ -2,7 +2,7 @@
 //  ARRelationshipHasMany.m
 //  ActiveRecord
 //
-//  Created by Fj√∂lnir √Åsgeirsson on 30.8.2007.
+//  Created by Fjölnir Ásgeirsson on 30.8.2007.
 //  Copyright 2007 ninja kitten. All rights reserved.
 //
 
@@ -39,8 +39,9 @@
 {
 	if(![self respondsToKey:key])
     return nil;
+  NSString *railsName = [[[[key singularizedString] stringByReplacingOccurrencesOfString:@"_" withString:@" "] capitalizedString] stringByReplacingOccurrencesOfString:@" " withString:@""];
   Class partnerClass = NSClassFromString([NSString stringWithFormat:@"%@%@", 
-                                          [[self.record class] classPrefix], [[key singularizedString] capitalizedString]]);
+                                          [[self.record class] classPrefix], railsName]);
   if(!partnerClass)
   {
     [NSException raise:@"Active record error" format:@"No model class found for key %@! (looked for class named %@)",
