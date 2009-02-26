@@ -17,6 +17,10 @@
 - (void)finalizeQuery:(sqlite3_stmt *)query;
 - (NSArray *)columnsForQuery:(sqlite3_stmt *)query;
 - (id)valueForColumn:(unsigned int)colIndex query:(sqlite3_stmt *)query;
+- (NSDate *)dateFromString:(NSString *)dateString;
+- (NSDate *)dateTimeFromString:(NSString *)dateString;
+- (NSString *)stringFromDate:(NSDate *)date;
+- (NSString *)stringFromDateTime:(NSDate *)date;
 @end
 /*! @endcond */
 
@@ -60,7 +64,7 @@
 }
 
 #pragma mark -
-#pragma mark SQL Eecuting
+#pragma mark SQL Executing
 - (NSArray *)executeSQL:(NSString *)sql substitutions:(NSDictionary *)substitutions
 {
 	//ARDebugLog(@"Executing SQL: %@ subs: %@", sql, substitutions);
@@ -81,13 +85,24 @@
 			continue;
 		if([sub isMemberOfClass:[NSString class]] || [[sub className] isEqualToString:@"NSCFString"])
 			sqlite3_bind_text(queryByteCode, i, [sub UTF8String], -1, SQLITE_TRANSIENT);
-		else if([sub isMemberOfClass:[NSData class]])
+    else if([sub isMemberOfClass:[NSData class]] || [[sub className] isEqualToString:@"NSConcreteData"] || [[sub className] isEqualToString:@"NSConcreteMutableData"] || [[sub className] isEqualToString:@"NSCFData"])
+
 			sqlite3_bind_blob(queryByteCode, i, [sub bytes], [sub length], SQLITE_STATIC); // Not sure if we should make this transient
 		else if([[sub className] isEqualToString:@"NSCFNumber"])
 			sqlite3_bind_double(queryByteCode, i, [sub doubleValue]);
 		else if([sub isMemberOfClass:[NSNull class]])
 			sqlite3_bind_null(queryByteCode, i);
-		else
+		else if([sub isMemberOfClass:[NSDate class]] || [[sub className] isEqualToString:@"NSCFDate"] || [[sub className] isEqualToString:@"__NSCFDate"]) 
+    {
+      // FIXME: DATE and DATETIME are stored as DATETIME (wasted disk space)
+      //        I think to fix columnCache should be moved from ARBase to
+      //        here (connection) as columnsForTable is expensive.  Howerver,
+      //        ARBase should have a way to clear out the cache entries it 
+      //        addes to the connection when the model is destoryed.
+      NSString *str = nil;
+      str = [self stringFromDateTime:sub];
+      sqlite3_bind_text(queryByteCode, i, [str UTF8String], [str length], SQLITE_TRANSIENT);
+		} else
 			[NSException raise:@"Unrecognized object type" format:@"Active record doesn't know how to handle this type of object: %@ class: %@", sub, [sub className]];
 	}
   
@@ -133,9 +148,22 @@
 
 - (NSArray *)columnsForTable:(NSString *)tableName
 {
+
+  NSArray *columns = nil;
+
+  if (!columnCache)
+		columnCache = [[NSMutableDictionary dictionary] retain];
+  else
+    columns = [columnCache objectForKey:tableName];
+  
+  if ( columns )
+    return columns;
+
   sqlite3_stmt *queryByteCode = [self prepareQuerySQL:[NSString stringWithFormat:@"SELECT * FROM %@", tableName]];
-  NSArray *columns = [self columnsForQuery:queryByteCode];
+  columns = [self columnsForQuery:queryByteCode];
   [self finalizeQuery:queryByteCode];
+
+  [columnCache setObject:columns forKey:tableName];
   return columns;
 }
 
@@ -191,6 +219,7 @@
 - (id)valueForColumn:(unsigned int)colIndex query:(sqlite3_stmt *)query
 {
   int columnType = sqlite3_column_type(query, colIndex);
+  const char *decltype = nil;
   switch(columnType)
   {
     case SQLITE_INTEGER:
@@ -207,7 +236,13 @@
       return [NSNull null];
       break;
     case SQLITE_TEXT:
-      return [NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)];
+      decltype = sqlite3_column_decltype(query, colIndex);
+      if ( !strcmp(decltype, "date") ) 
+        return [self dateFromString:[NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)]];
+      else if ( !strcmp(decltype, "datetime") )
+        return [self dateTimeFromString:[NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)]];
+      else 
+        return [NSString stringWithUTF8String:(const char *)sqlite3_column_text(query, colIndex)];
       break;
     default:
       // It really shouldn't ever come to this.
@@ -243,6 +278,38 @@
   return YES;
 }
 
+- (NSDate *)dateFromString:(NSString *)dateString
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd"];
+  return ([dateFormatter dateFromString:dateString]);
+}
+
+- (NSString *)stringFromDate:(NSDate *)date
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd"];
+  return ([dateFormatter stringFromDate:date]);
+}
+
+- (NSDate *)dateTimeFromString:(NSString *)dateString
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss.SSSS"];
+  return ([dateFormatter dateFromString:dateString]);
+}
+
+- (NSString *)stringFromDateTime:(NSDate *)date
+{
+  if ( dateFormatter == nil ) 
+    dateFormatter = [[NSDateFormatter alloc] init];
+  [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss.SSSS"];
+  return ([dateFormatter stringFromDate:date]);
+}
+
 #pragma mark -
 #pragma mark Cleanup
 - (void)finalize
@@ -253,6 +320,7 @@
 - (void)dealloc
 {
   [self closeConnection];
+  [dateFormatter release];
   [super dealloc];
 }
 @end
