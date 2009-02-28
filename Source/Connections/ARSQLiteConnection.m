@@ -73,6 +73,7 @@
   queryByteCode = [self prepareQuerySQL:sql];
 	NSArray *columnNames = [self columnsForQuery:queryByteCode];
 
+	NSLog(sql);
 	for(int i = 1; i <= sqlite3_bind_parameter_count(queryByteCode); ++i)
 	{
 		const char *keyCstring = sqlite3_bind_parameter_name(queryByteCode, i);
@@ -105,7 +106,7 @@
 		} else
 			[NSException raise:@"Unrecognized object type" format:@"Active record doesn't know how to handle this type of object: %@ class: %@", sub, [sub className]];
 	}
-  
+
   NSMutableArray *rowArray = [NSMutableArray array];
   NSMutableDictionary *columns;
   int err = 0;
