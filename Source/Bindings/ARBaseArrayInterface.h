@@ -33,6 +33,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _ARBASE_ARRAYINTERFACE_H_
 #define _ARBASE_ARRAYINTERFACE_H_
+#ifndef TARGET_OS_IPHONE
+#import <Cocoa/Cocoa.h>
+#endif
 #import <ActiveRecord/ARBase.h>
 
 /*!

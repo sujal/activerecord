@@ -15,15 +15,17 @@
 @implementation ARRelationshipHasMany
 #pragma mark Key parser
 #pragma mark -
+
 - (BOOL)respondsToKey:(NSString *)key supportsAdding:(BOOL *)supportsAddingRet
 {
-  if([key isEqualToString:self.name])
+	NSString *relationshipName = [key underscoredString];
+  if([relationshipName isEqualToString:self.name])
   {
     if(supportsAddingRet != NULL)
       *supportsAddingRet = NO;
     return YES;
   }
-  else if([key isEqualToString:[self.name singularizedString]])
+  else if([relationshipName isEqualToString:[self.name singularizedString]])
   {
     if(supportsAddingRet != NULL)
       *supportsAddingRet = YES;
@@ -40,7 +42,7 @@
 	if(![self respondsToKey:key])
     return nil;
   Class partnerClass = NSClassFromString([NSString stringWithFormat:@"%@%@", 
-                                          [[self.record class] classPrefix], [[key singularizedString] capitalizedString]]);
+                                          [[self.record class] classPrefix], [self className]]);
   if(!partnerClass)
   {
     [NSException raise:@"Active record error" format:@"No model class found for key %@! (looked for class named %@)",
@@ -113,9 +115,8 @@
 - (NSString *)className
 {
   if(!className)
-    return [NSString stringWithFormat:@"%@%@", [ARBase classPrefix], [[self.name singularizedString] capitalizedString]];
-  else
-    return className;
+    self.className = [NSString stringWithFormat:@"%@%@", [ARBase classPrefix], [[[self.name singularizedString] camelizedString] stringByCapitalizingFirstLetter]];
+	return className;
 }
 @end
 

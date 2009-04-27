@@ -58,9 +58,8 @@
 - (NSString *)className
 {
   if(!className)
-    return [NSString stringWithFormat:@"%@%@", [ARBase classPrefix], [self.name stringByCapitalizingFirstLetter]];
-  else
-    return className;
+    self.className = [NSString stringWithFormat:@"%@%@", [ARBase classPrefix], [[[self.name singularizedString] camelizedString] stringByCapitalizingFirstLetter]];
+	return className;
 }
 @end
 

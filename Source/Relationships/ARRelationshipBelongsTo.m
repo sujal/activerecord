@@ -18,9 +18,10 @@
 #pragma mark -
 - (BOOL)respondsToKey:(NSString *)key supportsAdding:(BOOL *)supportsAddingRet
 {
+	NSString *relationshipName = [key underscoredString];
   if(supportsAddingRet != NULL)
     *supportsAddingRet = NO;
-  if([key isEqualToString:[self.name singularizedString]])
+  if([relationshipName isEqualToString:[self.name singularizedString]])
     return YES;
   return NO;
 }

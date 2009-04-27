@@ -77,6 +77,14 @@ static NSString *classPrefix = nil;
 			[readCache removeObjectForKey:key];
 	}
 }
+- (void)removeFromCache:(NSString *)key 
+{
+    [readCache removeObjectForKey:key];
+}
+- (void)clearWriteCache
+{
+    [writeCache removeAllObjects];
+}
 
 #pragma mark -
 #pragma mark Delayed writing
@@ -208,6 +216,13 @@ static NSString *classPrefix = nil;
 {
   return [self initWithConnection:[ARBase defaultConnection] id:id];
 }
+- (id)initWithConnection:(id<ARConnection>)aConnection id:(NSUInteger)id readCache:(NSDictionary *)initialReadCache;
+{
+  [self initWithConnection:aConnection id:id];
+  [readCache release]; 
+  readCache = [initialReadCache mutableCopy];
+  return self;
+}
 - (id)initWithConnection:(id<ARConnection>)aConnection id:(NSUInteger)id
 {
   if(![self init])
@@ -241,8 +256,14 @@ static NSString *classPrefix = nil;
 #pragma mark Accessors
 - (id)retrieveValueForKey:(NSString *)key
 {
+	id cached;
+  // First check the delayed writing cache
+	cached = [writeCache objectForKey:key];
+	if(cached && [ARBase delayWriting])
+		return cached;
+
 	// Check if we have a cached value and if caching is enabled
-	id cached = [readCache objectForKey:key];
+	cached = [readCache objectForKey:key];
 	if(cached && [ARBase enableCache])
 		return cached;
 	
@@ -322,13 +343,14 @@ static NSString *classPrefix = nil;
 #pragma mark Database interface
 - (NSArray *)columns
 {
-	if(!columnCache)
-		columnCache = [[self.connection columnsForTable:[[self class] tableName]] retain];
-	return columnCache;
+  return [[self.connection columnsForTable:[[self class] tableName]] retain];
 }
 + (NSString *)idColumnForModel:(Class)modelClass
 {
-  return [NSString stringWithFormat:@"%@Id", [[modelClass tableName] singularizedString]];
+	if([[self class] namingStyle] == ARRailsNamingStyle)
+		return [NSString stringWithFormat:@"%@_id", [[modelClass tableName] singularizedString]];
+	else
+		return [NSString stringWithFormat:@"%@Id", [[modelClass tableName] singularizedString]];
 }
 + (NSString *)idColumn
 {
@@ -401,8 +423,6 @@ static NSString *classPrefix = nil;
 	[readCache release];
 	[addCache release];
 	[removeCache release];
-	if(columnCache)
-		[columnCache release];
   
   [super dealloc];
 }

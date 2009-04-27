@@ -37,10 +37,9 @@
         }
         if(outAttribute != NULL)
         {
-          // Make the first char lowercase
+          // underscore attribute
           NSString *attribute = [selector substringFromIndex:[scanner scanLocation]];
-          NSString *firstChar = [attribute substringToIndex:1];
-          attribute = [attribute stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:[firstChar lowercaseString]];
+					attribute = [attribute underscoredString];
           attribute = [attribute stringByReplacingOccurrencesOfString:@":" withString:@""];
           *outAttribute = attribute;
         }
@@ -56,9 +55,10 @@
 }
 - (ARRelationship *)relationshipForKey:(NSString *)key
 {
+	NSString *attribute = [key underscoredString];
   for(ARRelationship *relationship in self.relationships)
   {
-    if([relationship respondsToKey:key])
+    if([relationship respondsToKey:attribute])
       return relationship;
   }
   return nil;
